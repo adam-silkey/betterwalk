@@ -274,12 +274,13 @@ def iterdir(path='.', pattern='*'):
         yield name
 
 
-def walk(top, topdown=True, onerror=None, followlinks=False):
+def walk(top, topdown=True, onerror=None, followlinks=False, stats=False):
     """Just like os.walk(), but faster, as it uses iterdir_stat internally."""
     # Determine which are files and which are directories
     dirs = []
     dir_stats = []
     nondirs = []
+    nondir_stats = []
     try:
         for name, st in iterdir_stat(top, fields=['st_mode_type']):
             if stat.S_ISDIR(st.st_mode):
@@ -287,6 +288,7 @@ def walk(top, topdown=True, onerror=None, followlinks=False):
                 dir_stats.append(st)
             else:
                 nondirs.append(name)
+                nondir_stats.append(st)
     except OSError as err:
         if onerror is not None:
             onerror(err)
@@ -294,15 +296,53 @@ def walk(top, topdown=True, onerror=None, followlinks=False):
 
     # Yield before recursion if going top down
     if topdown:
-        yield top, dirs, nondirs
-
+        if stats:
+            yield top, zip(dirs, dir_stats), zip(nondirs, nondir_stats)
+        elif not stats:
+            yield top, dirs, nondirs
+            
     # Recurse into sub-directories, following symbolic links if "followlinks"
     for name, st in zip(dirs, dir_stats):
         new_path = os.path.join(top, name)
         if followlinks or not stat.S_ISLNK(st.st_mode):
-            for x in walk(new_path, topdown, onerror, followlinks):
+            for x in walk(new_path, topdown, onerror, followlinks, stats):
                 yield x
 
     # Yield before recursion if going bottom up
     if not topdown:
-        yield top, dirs, nondirs
+        if stats:
+            yield top, zip(dirs, dir_stats), zip(nondirs, nondir_stats)
+        elif not stats:
+            yield top, dirs, nondirs
+
+            
+            
+print('\nTesting walk()')
+for top, dirs, files in walk('.'):
+    for subdir in dirs:
+        print('Joined path: ' + os.path.join(top, subdir))
+        print('  top:         ' + top)
+        print('  subdir:      ' + str(subdir))
+        print('\n')
+    for file in files:
+        print('Joined path: ' + os.path.join(top, file))
+        print('  top:         ' + top)
+        print('  file:        ' + str(file))
+        print('\n')
+
+print('\nTesting walk() with stats')
+for top, dirs, files in walk('.', stats=True):
+    for subdir in dirs:
+        print('Joined path: ' + os.path.join(top, subdir[0]))
+        print('  top:         ' + top)
+        print('  subdir:      ' + str(subdir))
+        print('\n')
+    for file in files:
+        print('Joined path: ' + os.path.join(top, file[0]))
+        print('  top:         ' + top)
+        print('  file:        ' + str(file))
+        print('\n')
+
+
+
+
