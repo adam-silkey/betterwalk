@@ -314,35 +314,3 @@ def walk(top, topdown=True, onerror=None, followlinks=False, stats=False):
             yield top, zip(dirs, dir_stats), zip(nondirs, nondir_stats)
         elif not stats:
             yield top, dirs, nondirs
-
-            
-            
-print('\nTesting walk()')
-for top, dirs, files in walk('.'):
-    for subdir in dirs:
-        print('Joined path: ' + os.path.join(top, subdir))
-        print('  top:         ' + top)
-        print('  subdir:      ' + str(subdir))
-        print('\n')
-    for file in files:
-        print('Joined path: ' + os.path.join(top, file))
-        print('  top:         ' + top)
-        print('  file:        ' + str(file))
-        print('\n')
-
-print('\nTesting walk() with stats')
-for top, dirs, files in walk('.', stats=True):
-    for subdir in dirs:
-        print('Joined path: ' + os.path.join(top, subdir[0]))
-        print('  top:         ' + top)
-        print('  subdir:      ' + str(subdir))
-        print('\n')
-    for file in files:
-        print('Joined path: ' + os.path.join(top, file[0]))
-        print('  top:         ' + top)
-        print('  file:        ' + str(file))
-        print('\n')
-
-
-
-
