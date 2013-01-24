@@ -16,7 +16,7 @@ import stat
 import sys
 
 __version__ = '0.6'
-__all__ = ['iterdir', 'iterdir_stat', 'walk']
+__all__ = ['iterdir', 'iterdir_stat', 'walk', 'walk_stat']
 
 
 # Windows implementation
@@ -274,7 +274,7 @@ def iterdir(path='.', pattern='*'):
         yield name
 
 
-def walk(top, topdown=True, onerror=None, followlinks=False, stats=False):
+def _walk(top, topdown=True, onerror=None, followlinks=False, stats=False):
     """Just like os.walk(), but faster, as it uses iterdir_stat internally."""
     # Determine which are files and which are directories
     dirs = []
@@ -305,7 +305,7 @@ def walk(top, topdown=True, onerror=None, followlinks=False, stats=False):
     for name, st in zip(dirs, dir_stats):
         new_path = os.path.join(top, name)
         if followlinks or not stat.S_ISLNK(st.st_mode):
-            for x in walk(new_path, topdown, onerror, followlinks, stats):
+            for x in _walk(new_path, topdown, onerror, followlinks, stats):
                 yield x
 
     # Yield before recursion if going bottom up
@@ -314,3 +314,10 @@ def walk(top, topdown=True, onerror=None, followlinks=False, stats=False):
             yield top, zip(dirs, dir_stats), zip(nondirs, nondir_stats)
         elif not stats:
             yield top, dirs, nondirs
+
+def walk(top, topdown=True, onerror=None, followlinks=False):
+    return _walk(top, topdown, onerror, followlinks, stats=False)
+
+def walk_stat(top, topdown=True, onerror=None, followlinks=False):
+    return _walk(top, topdown, onerror, followlinks, stats=True)
+
